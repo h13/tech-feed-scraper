@@ -1,255 +1,133 @@
-# Apps Script Fleet
+# Tech Feed Scraper
 
-[![CI](https://github.com/h13/apps-script-fleet/actions/workflows/ci.yml/badge.svg)](https://github.com/h13/apps-script-fleet/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/h13/apps-script-fleet/blob/main/LICENSE)
+[![CI](https://github.com/h13/tech-feed-scraper/actions/workflows/ci.yml/badge.svg)](https://github.com/h13/tech-feed-scraper/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/h13/tech-feed-scraper/blob/main/LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D24-green.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue.svg)](https://www.typescriptlang.org/)
-[![Google Apps Script](https://img.shields.io/badge/Google%20Apps%20Script-Template-4285F4.svg)](https://developers.google.com/apps-script)
+[![Google Apps Script](https://img.shields.io/badge/Google%20Apps%20Script-4285F4.svg)](https://developers.google.com/apps-script)
 
 [日本語](README.ja.md)
 
-**Infrastructure for scaling Google Apps Script across your organization.**
+**Automatically collect trending tech articles from Zenn and save them to Google Sheets.**
 
-Most Apps Script templates help you set up _one_ project with modern tooling. This one is designed so you never have to set up tooling again — create a repo from this template, set a script ID, and your CI/CD pipeline is already running. Works with GitHub and GitLab — cloud and self-managed.
+A Google Apps Script application that periodically crawls [Zenn](https://zenn.dev/)'s trending RSS feed and appends new article titles and URLs to a spreadsheet — with deduplication so you never see the same article twice.
 
-**[→ Quick Start](#quick-start)** · [What's Included](#whats-included) · [How This Differs](#how-this-differs) · [FAQ](#faq)
-
-## The Problem
-
-Apps Script projects start small, but they multiply. Slack notifications, report generation, form processing, Drive automation — before long, your organization has a dozen scripts. Each one needs:
-
-- TypeScript configuration
-- A bundler (Rollup, Webpack, Vite)
-- Linting and formatting
-- Test setup with coverage
-- CI/CD workflows for dev and production
-- clasp authentication management
-- Ongoing dependency updates
-
-Setting this up takes 2–4 hours per project. At 10 projects, that's a week of pure boilerplate — plus 10 different configurations to maintain going forward.
-
-## The Solution: 1 Repo = 1 Function
-
-![Architecture — 1 repo per function with shared org infrastructure](docs/architecture.png)
-
-Apps Script Fleet treats each function as an independent repository, backed by shared organizational infrastructure:
-
-- **One-time setup**: Add `CLASPRC_JSON` to your org/group-level secrets ([GitHub](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-an-organization) or [GitLab](https://docs.gitlab.com/ci/variables/#for-a-group)). Every repo created from this template uses it automatically.
-- **Per-project setup (~5 min)**: Create a repo from this template → set your script ID → done. CI runs on PRs/MRs, CD deploys on merge.
-- **Fleet maintenance**: [Renovate](https://docs.renovatebot.com/) auto-updates dependencies across all repos. [Template sync](.github/workflows/sync-template.yml) propagates tooling improvements from the upstream template.
-
-The difference at a glance:
-
-![Before and after comparison](docs/before-after.png)
-
-## What's Included
-
-| Category     | Tools                                                              |
-| ------------ | ------------------------------------------------------------------ |
-| Language     | TypeScript (strict mode)                                           |
-| Bundler      | Rollup (Apps Script–compatible output)                             |
-| Deployment   | clasp (dev / prod environments)                                    |
-| Testing      | Jest (80% coverage threshold)                                      |
-| Linting      | ESLint, Prettier, Stylelint, HTMLHint                              |
-| Git hooks    | husky + lint-staged                                                |
-| CI/CD        | GitHub Actions + GitLab CI (CI on PR, CD on merge to `dev`/`main`) |
-| Dependencies | Renovate (auto-update with automerge)                              |
-| Sync         | Template sync workflow (upstream config updates)                   |
-
-The result — your day looks like this:
-
-![A developer's day: without vs with Apps Script Fleet](docs/before-after-human.png)
-
-## How This Differs
-
-|                | [Apps Script Engine](https://github.com/WildH0g/apps-script-engine-template) | Apps Script Fleet                            |
-| -------------- | ---------------------------------------------------------------------------- | -------------------------------------------- |
-| Philosophy     | Feature-rich DX                                                              | Minimal constraints                          |
-| Best for       | Single complex project                                                       | Many small automations                       |
-| Frontend dev   | Vite + Alpine.js + Tailwind                                                  | Basic HTML (Apps Script built-in)            |
-| Testing        | Vitest (optional)                                                            | Jest (80% coverage enforced)                 |
-| Template sync  | —                                                                            | Weekly (auto-PR)                             |
-| Org-level auth | —                                                                            | CLASPRC_JSON shared secret (GitHub + GitLab) |
-
-> Building a rich UI with client-side frameworks? [Apps Script Engine](https://github.com/WildH0g/apps-script-engine-template) is the better fit.
-> Managing 5+ small Apps Script automations across your org? That's what Apps Script Fleet is for.
-
-## Quick Start
-
-- **GitHub / GitHub Enterprise Server**: [docs/setup-github.md](docs/setup-github.md)
-- **GitLab.com / GitLab Self-Managed**: [docs/setup-gitlab.md](docs/setup-gitlab.md)
-
-## CI/CD Pipeline
-
-Both GitHub Actions and GitLab CI configurations are included. The same pipeline runs on whichever platform you push to — no additional setup needed beyond CI/CD variables.
-
-### GitHub Actions
+## How It Works
 
 ```
-Push / PR  →  CI (ci.yml)  →  CD (cd.yml)
-               ├── Lint          └── Build
-               ├── Typecheck         └── clasp push
-               ├── Test                  └── clasp deploy
-               └── Build
+Time-driven Trigger (every 6 hours)
+    → Read feed URLs from "Feeds" sheet
+    → Fetch RSS XML via UrlFetchApp
+    → Parse titles and URLs
+    → Deduplicate against existing "Articles" rows
+    → Append new entries
 ```
 
-| Trigger        | Pipeline       | Behavior                           |
-| -------------- | -------------- | ---------------------------------- |
-| PR to `main`   | CI only        | lint → typecheck → test → build    |
-| Push to `dev`  | CI → CD (dev)  | cancel-in-progress                 |
-| Push to `main` | CI → CD (prod) | queued (sequential, never skipped) |
+## Google Sheets Structure
 
-### GitLab CI
+Prepare two sheets in your spreadsheet:
 
-`.gitlab-ci.yml` includes split configs from `.gitlab/` (ci.yml, cd.yml, sync-template.yml). See [docs/setup-gitlab.md](docs/setup-gitlab.md) for variable configuration and Self-Managed runner requirements.
+### Feeds sheet
 
-| Job             | Stage  | Trigger           |
-| --------------- | ------ | ----------------- |
-| `check`         | check  | push / MR         |
-| `deploy_dev`    | deploy | push to `dev`     |
-| `deploy_prod`   | deploy | push to `main`    |
-| `template_sync` | sync   | schedule / manual |
+| A (URL) |
+|---------|
+| `https://zenn.dev/feed` |
 
-### Pre/Post-Deploy Hooks
+### Articles sheet
 
-Customize the deploy pipeline without modifying template-managed files:
+| A (Title) | B (URL) |
+|-----------|---------|
+| *(auto-populated)* | *(auto-populated)* |
 
-- **GitHub Actions**: create `.github/hooks/pre-deploy.sh` or `.github/hooks/post-deploy.sh`
-- **GitLab CI**: create `.gitlab/pre-deploy.yml` or `.gitlab/post-deploy.yml`
-
-These files are not synced from the template.
+Row 1 is the header row in both sheets.
 
 ## Project Structure
 
 ```
-your-project/
+tech-feed-scraper/
 ├── src/
-│   ├── index.ts           # Apps Script entry points (doGet, etc.)
-│   ├── greeting.ts        # Business logic (example)
-│   └── app.html           # Web UI (example)
+│   ├── index.ts       # GAS entry point (scrape function)
+│   ├── feed.ts        # RSS fetch and parse
+│   ├── sheet.ts       # Deduplication logic
+│   └── types.ts       # Type definitions
 ├── test/
-│   └── greeting.test.ts
-├── .github/workflows/
-│   ├── ci.yml             # CI: lint → typecheck → test → build
-│   ├── cd.yml             # CD: deploy on CI success
-│   └── sync-template.yml  # Sync from upstream template
-├── .gitlab-ci.yml         # GitLab CI/CD root (includes .gitlab/*.yml)
-├── .gitlab/
-│   ├── ci.yml             # CI: lint → typecheck → test → build
-│   ├── cd.yml             # CD: clasp push + deploy
-│   └── sync-template.yml  # Template sync (scheduled)
+│   ├── feed.test.ts   # Feed parser tests
+│   └── sheet.test.ts  # Filter tests
+├── appsscript.json    # GAS manifest (OAuth scopes)
 ├── rollup.config.mjs
 ├── tsconfig.json
-├── jest.config.json
-├── eslint.config.mjs
-├── renovate.json          # Auto-update config
-└── .templatesyncignore    # Your code won't be overwritten
+└── jest.config.json
 ```
 
-## Development Workflow
+## Setup
 
-### Daily
+### Prerequisites
 
-```
-# Edit src/ → check → deploy to dev → verify
-pnpm run check
-pnpm run deploy
-```
+- Node.js >= 24
+- pnpm
+- [clasp](https://github.com/google/clasp) (Google Apps Script CLI)
 
-### PR Flow
+### Steps
 
-1. Create a feature branch
-2. Commit — husky auto-runs lint-staged
-3. Push and create PR — CI runs automatically
-4. Merge to `main` — CD deploys to production
+1. **Clone and install**
+
+   ```bash
+   git clone https://github.com/h13/tech-feed-scraper.git
+   cd tech-feed-scraper
+   pnpm install
+   ```
+
+2. **Configure clasp**
+
+   Create `.clasp-dev.json` and/or `.clasp-prod.json` with your Script ID:
+
+   ```json
+   { "scriptId": "YOUR_SCRIPT_ID", "rootDir": "dist" }
+   ```
+
+3. **Prepare the spreadsheet**
+
+   - Create a Google Sheet
+   - Add a sheet named **Feeds** with header `URL` in A1 and `https://zenn.dev/feed` in A2
+   - Add a sheet named **Articles** with headers `Title` in A1 and `URL` in B1
+
+4. **Deploy**
+
+   ```bash
+   pnpm run deploy       # Deploy to dev
+   pnpm run deploy:prod  # Deploy to production
+   ```
+
+5. **Set up trigger**
+
+   In the Apps Script editor, create a time-driven trigger for the `scrape` function to run every 6 hours.
+
+## Development
 
 ### Available Commands
 
-| Command                    | Description                                |
-| -------------------------- | ------------------------------------------ |
-| `pnpm run check`           | lint + lint:css + lint:html + typecheck + test |
-| `pnpm run build`           | Bundle TypeScript + copy assets to `dist/` |
-| `pnpm run deploy`          | check → build → deploy to dev              |
-| `pnpm run deploy:prod`     | check → build → deploy to production       |
-| `pnpm run test -- --watch` | Jest in watch mode                         |
+| Command                    | Description                                    |
+| -------------------------- | ---------------------------------------------- |
+| `pnpm run check`           | lint + lint:css + lint:html + typecheck + test  |
+| `pnpm run build`           | Bundle TypeScript + copy assets to `dist/`     |
+| `pnpm run deploy`          | check → build → deploy to dev                  |
+| `pnpm run deploy:prod`     | check → build → deploy to production           |
+| `pnpm run test -- --watch` | Jest in watch mode                             |
 
-## Keeping Repos in Sync
+### Adding More Feeds
 
-### Template Sync
+Simply add more RSS feed URLs to the **Feeds** sheet. The scraper processes all URLs listed there on each run.
 
-- **GitHub**: The `sync-template.yml` workflow checks for upstream template updates weekly. When updates are found, a PR with the `template-sync` label is created.
-- **GitLab**: Create a Template Project in your Group, then use "Create from template" for each GAS project. User Projects sync from the Template Project via `TEMPLATE_REPO_URL` (Group Variable). See [docs/setup-gitlab.md](docs/setup-gitlab.md) for details.
+## OAuth Scopes
 
-`.templatesyncignore` uses a whitelist format — only files with `:!` prefix are synced. Your project-specific files (`src/`, `test/`, `README.md`, etc.) are automatically excluded.
+| Scope | Purpose |
+|-------|---------|
+| `script.external_request` | Fetch RSS feeds via UrlFetchApp |
+| `spreadsheets` | Read/write Google Sheets |
 
-### Renovate
+## Built With
 
-Configured via [`h13/renovate-config:node`](https://github.com/h13/renovate-config):
-
-- Minor/patch: automerged
-- Major: PR for manual review (labeled `breaking`)
-- DevDependencies: grouped and automerged
-- 7-day stability buffer before updating
-- Runs weekly on Sunday after 9pm
-
-## Customization
-
-### Adding OAuth Scopes
-
-Edit `oauthScopes` in `appsscript.json`:
-
-```json
-{
-  "oauthScopes": [
-    "https://www.googleapis.com/auth/script.external_request",
-    "https://www.googleapis.com/auth/spreadsheets"
-  ]
-}
-```
-
-### Adding Source Files
-
-1. Create a module in `src/` (e.g., `src/utils.ts`)
-2. Import it in `src/index.ts` — Rollup bundles everything
-3. Add tests in `test/`
-
-> Apps Script only sees functions defined at the top level of `src/index.ts`.
-
-### Adjusting Coverage Threshold
-
-Edit `coverageThreshold` in `jest.config.json`. Default is 80% for all metrics. For small projects (5–10 functions), consider raising it to 100%.
-
-## Testing
-
-Tests live in `test/` and run with Jest. `src/index.ts` is excluded from coverage (Apps Script globals like `HtmlService` can't run in Node.js).
-
-```
-pnpm run test              # Run with coverage
-pnpm run test -- --watch   # Watch mode
-```
-
-## Example Projects
-
-Real projects built with Apps Script Fleet:
-
-| Project | Pattern | Description |
-|---------|---------|-------------|
-| [custom-functions](https://github.com/h13/apps-script-custom-functions) | Custom functions | Google Sheets data validation (email, phone, postal code) |
-| [form-mailer](https://github.com/h13/apps-script-form-mailer) | Web App | Contact form with Gmail notification |
-| [slack-channel-archiver](https://github.com/h13/apps-script-slack-channel-archiver) | Time-driven trigger | Auto-archive inactive Slack channels (public + private) |
-| [slack-notifier](https://github.com/h13/apps-script-slack-notifier) | Time-driven trigger | Spreadsheet new rows to Slack via Bot Token |
-
-Each repo demonstrates the "1 repo = 1 function" pattern with full CI/CD, testing, and deployment.
-
-## FAQ
-
-### Why 1 repo per function instead of a monorepo?
-
-Apps Script projects are typically small, self-contained automations. A monorepo adds complexity (workspace tooling, selective deploys) that doesn't pay off at this scale. Separate repos give you independent CI/CD, clear ownership, and simpler mental models — while template sync and Renovate handle the maintenance overhead.
-
-### Why 80% test coverage by default?
-
-For small, focused Apps Script functions, high coverage is achievable and catches subtle bugs before they hit production. 80% provides a meaningful quality gate without being a barrier to adoption. For projects with a tiny scope (5–10 functions), consider raising it to 100% in `jest.config.json`.
+[Apps Script Fleet](https://github.com/h13/apps-script-fleet) — TypeScript, Rollup, Jest, clasp, GitHub Actions / GitLab CI.
 
 ## License
 
