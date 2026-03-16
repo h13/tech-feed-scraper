@@ -20,7 +20,7 @@ A Google Apps Script application that periodically crawls [Zenn](https://zenn.de
 ## How It Works
 
 ```
-Time-driven Trigger (every 6 hours)
+Time-driven Trigger (daily at 9:00 AM JST)
     → Read feed URLs from "Feeds" sheet
     → Fetch RSS XML via UrlFetchApp
     → Parse titles and URLs
@@ -114,7 +114,7 @@ tech-feed-scraper/
 
 6. **Set up trigger**
 
-   In the Apps Script editor, create a time-driven trigger for the `scrape` function to run every 6 hours.
+   In the Apps Script editor, run `installTrigger` to set up a daily trigger (9:00 AM JST). Or create one manually from the Triggers menu.
 
 ## Development
 

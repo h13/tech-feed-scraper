@@ -20,7 +20,7 @@
 ## 仕組み
 
 ```
-時限トリガー（6時間ごと）
+時限トリガー（毎日 9:00 AM JST）
     → "Feeds" シートからフィード URL を読み取り
     → UrlFetchApp で RSS XML を取得
     → タイトルと URL をパース
@@ -114,7 +114,7 @@ tech-feed-scraper/
 
 6. **トリガーの設定**
 
-   Apps Script エディタで `scrape` 関数に6時間ごとの時限トリガーを作成します。
+   Apps Script エディタで `installTrigger` を実行すると、毎日 9:00 AM JST のトリガーが設定されます。トリガーメニューから手動作成も可能です。
 
 ## 開発
 
