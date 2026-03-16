@@ -2,6 +2,19 @@ import { parseFeed } from "./feed.js";
 import { filterNewEntries } from "./sheet.js";
 import type { Article } from "./types.js";
 
+function installTrigger(): void {
+  const triggers = ScriptApp.getProjectTriggers();
+  const existing = triggers.find((t) => t.getHandlerFunction() === "scrape");
+  if (existing !== undefined) {
+    Logger.log("Trigger already exists, removing first");
+    ScriptApp.deleteTrigger(existing);
+  }
+
+  ScriptApp.newTrigger("scrape").timeBased().everyDays(1).atHour(9).create();
+
+  Logger.log("Daily trigger installed: scrape runs at 9:00 AM");
+}
+
 function scrape(): void {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
