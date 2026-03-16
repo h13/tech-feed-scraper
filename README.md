@@ -103,7 +103,16 @@ tech-feed-scraper/
    pnpm run deploy:prod  # Deploy to production
    ```
 
-5. **Set up trigger**
+5. **Set up GCP project (personal Gmail accounts)**
+
+   If `scrape` execution shows "This app is blocked", you need to link a GCP project:
+
+   1. Create a project at [Google Cloud Console](https://console.cloud.google.com)
+   2. Go to "OAuth consent screen" → set user type to **External** → save
+   3. Under "Test users", add your Gmail address
+   4. In the Apps Script editor → Project Settings (gear icon) → set the GCP project number
+
+6. **Set up trigger**
 
    In the Apps Script editor, create a time-driven trigger for the `scrape` function to run every 6 hours.
 

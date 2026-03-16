@@ -103,7 +103,16 @@ tech-feed-scraper/
    pnpm run deploy:prod  # 本番にデプロイ
    ```
 
-5. **トリガーの設定**
+5. **GCP プロジェクトの設定（個人 Gmail アカウントの場合）**
+
+   `scrape` 実行時に「このアプリはブロックされます」と表示される場合、GCP プロジェクトの紐づけが必要です：
+
+   1. [Google Cloud Console](https://console.cloud.google.com) でプロジェクトを作成
+   2. 「OAuth 同意画面」→ ユーザータイプを**外部**に設定して保存
+   3. 「テストユーザー」に自分の Gmail アドレスを追加
+   4. Apps Script エディタ → プロジェクトの設定（歯車アイコン）→ GCP プロジェクト番号を設定
+
+6. **トリガーの設定**
 
    Apps Script エディタで `scrape` 関数に6時間ごとの時限トリガーを作成します。
 
