@@ -10,6 +10,11 @@
 
 **Automatically collect trending tech articles from Zenn and save them to Google Sheets.**
 
+| Resource | Link |
+|----------|------|
+| Google Sheets | [Tech Feed Scraper](https://docs.google.com/spreadsheets/d/1m63X71qmG_D12TPgtl6Uy_2Jdi5Kkndpc4eHIDTC9RI/edit) |
+| Apps Script | [Editor](https://script.google.com/d/1m947PhAkZh_TXB1IFdcT_YuHQqE_dnZfsmibzm9igE3IOsRKqy40cs9i/edit) |
+
 A Google Apps Script application that periodically crawls [Zenn](https://zenn.dev/)'s trending RSS feed and appends new article titles and URLs to a spreadsheet — with deduplication so you never see the same article twice.
 
 ## How It Works

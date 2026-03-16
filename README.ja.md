@@ -10,6 +10,11 @@
 
 **Zenn のトレンド記事を自動収集して Google Sheets に保存。**
 
+| リソース | リンク |
+|----------|--------|
+| Google Sheets | [Tech Feed Scraper](https://docs.google.com/spreadsheets/d/1m63X71qmG_D12TPgtl6Uy_2Jdi5Kkndpc4eHIDTC9RI/edit) |
+| Apps Script | [エディタ](https://script.google.com/d/1m947PhAkZh_TXB1IFdcT_YuHQqE_dnZfsmibzm9igE3IOsRKqy40cs9i/edit) |
+
 [Zenn](https://zenn.dev/) のトレンド RSS フィードを定期的にクロールし、記事のタイトルと URL をスプレッドシートに追記する Google Apps Script アプリケーションです。重複チェック付きで、同じ記事が二度記録されることはありません。
 
 ## 仕組み
